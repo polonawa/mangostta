@@ -38,7 +38,7 @@ DELETE FROM `character_spell` WHERE `spell` IN (3674,5420,9800,19263,20927,20928
 ALTER TABLE `characters` ADD `speccount` tinyint(3) unsigned NOT NULL default 1 AFTER `arena_pending_points`;
 ALTER TABLE `characters` ADD `activespec` tinyint(3) unsigned NOT NULL default 0 AFTER `speccount`;
 
-DROP TABLE `character_action`;
+ALTER TABLE `character_action` RENAME `character_action_old`;
 CREATE TABLE `character_action` (
   `guid` int(11) unsigned NOT NULL default '0',
   `spec` tinyint(3) unsigned NOT NULL default '0',
