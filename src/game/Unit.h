@@ -1617,6 +1617,10 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         PetAuraSet m_petAuras;
         void AddPetAura(PetAura const* petSpell);
         void RemovePetAura(PetAura const* petSpell);
+        
+        //patch de groupe
+        inline void SetSpoofSamePlayerFaction(bool b) { m_spoofSamePlayerFaction = b; }
+        inline bool IsSpoofSamePlayerFaction(void) {return m_spoofSamePlayerFaction; }
 
     protected:
         explicit Unit ();
@@ -1667,6 +1671,9 @@ class MANGOS_DLL_SPEC Unit : public WorldObject
         uint32 m_reactiveTimer[MAX_REACTIVE];
         uint32 m_regenTimer;
         uint32 m_lastManaUseTimer;
+        
+        //patch de groupe
+        bool m_spoofSamePlayerFaction : 1;
 
     private:
         void CleanupDeletedAuras();
