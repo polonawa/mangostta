@@ -4698,6 +4698,11 @@ void Player::RepopAtGraveyard()
 
     // if no grave found, stay at the current location
     // and don't show spirit healer location
+    
+    //Respawn sur place
+    if(!isAlive() && !GetBaseMap()->Instanceable())
+        ClosestGrave = NULL;
+        
     if(ClosestGrave)
     {
         TeleportTo(ClosestGrave->map_id, ClosestGrave->x, ClosestGrave->y, ClosestGrave->z, GetOrientation());
