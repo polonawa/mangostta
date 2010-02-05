@@ -3498,6 +3498,12 @@ void Player::removeSpell(uint32 spell_id, bool disabled, bool learn_low_rank, bo
             }
         }
     }
+    
+    if(spell_id == 46917 && m_canTitanGrip)
+        SetCanTitanGrip(false);
+
+    if(sWorld.getConfig(CONFIG_OFFHAND_CHECK_AT_SPELL_UNLEARN))
+        AutoUnequipOffhandIfNeed();
 
 	if(spell_id == 46917 && m_canTitanGrip)
         SetCanTitanGrip(false);
@@ -15078,10 +15084,9 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
 
     // Mail
     _LoadMail();
-
-	m_specsCount = fields[41].GetUInt32();
-    m_activeSpec = fields[42].GetUInt32();
-    delete result;
+  
+    m_specsCount = fields[59].GetUInt32();
+    m_activeSpec = fields[60].GetUInt32();
 
     // sanity check
     if (m_specsCount > MAX_TALENT_SPECS || m_activeSpec > MAX_TALENT_SPEC ||
@@ -15092,7 +15097,6 @@ bool Player::LoadFromDB( uint32 guid, SqlQueryHolder *holder )
     }
 
 	_LoadTalents(holder->GetResult(PLAYER_LOGIN_QUERY_LOADTALENTS));
-
 	_LoadGlyphs(holder->GetResult(PLAYER_LOGIN_QUERY_LOADGLYPHS));
     _LoadAuras(holder->GetResult(PLAYER_LOGIN_QUERY_LOADAURAS), time_diff);
     _LoadGlyphAuras();
@@ -16359,6 +16363,10 @@ void Player::SaveToDB()
 
     for(uint32 i = 0; i < MAX_POWERS; ++i)
         ss << "," << GetPower(Powers(i));
+	 ss << ", ";	
+    ss << uint32(m_specsCount);
+    ss << ", ";
+    ss << uint32(m_activeSpec);
 
     ss << ", ";
     ss << uint32(m_specsCount);
@@ -21552,7 +21560,6 @@ void Player::_LoadTalents(QueryResult *result)
         do
         {
             Field *fields = result->Fetch();
-
             AddTalent(fields[0].GetUInt32(), fields[1].GetUInt32(), false);
         }
         while( result->NextRow() );
@@ -21605,7 +21612,7 @@ void Player::UpdateSpecCount(uint8 count)
         for(ActionButtonList::iterator itr = m_actionButtons.begin(); itr != m_actionButtons.end(); ++itr)
         {
             CharacterDatabase.PExecute("INSERT INTO character_action (guid,button,action,type,spec) VALUES ('%u', '%u', '%u', '%u', '%u')",
-                GetGUIDLow(), (uint32)itr->first, (uint32)itr->second.GetAction(), (uint32)itr->second.GetType(), 1 );
+             GetGUIDLow(), (uint32)itr->first, (uint32)itr->second.GetAction(), (uint32)itr->second.GetType(), 1 );
         }
     }
     else
@@ -21636,8 +21643,6 @@ void Player::ActivateSpec(uint8 spec)
 
         if (!talentInfo)
             continue;
-
-        haveLearnedMaxRank=false;
 
         TalentTabEntry const *talentTabInfo = sTalentTabStore.LookupEntry(talentInfo->TalentTab);
 
@@ -21681,7 +21686,6 @@ void Player::ActivateSpec(uint8 spec)
 
     SetActiveSpec(spec);
     uint32 spentTalents = 0;
-    bool haveLearnedMaxRank=false;
 
     for (uint32 talentId = 0; talentId < sTalentStore.GetNumRows(); ++talentId)
     {
@@ -21706,11 +21710,10 @@ void Player::ActivateSpec(uint8 spec)
             if (talentInfo->RankID[rank] == 0)
                 continue;
             // if the talent can be found in the newly activated PlayerTalentMap
-            if (HasTalent(talentInfo->RankID[rank], m_activeSpec) && !haveLearnedMaxRank)
+            if (HasTalent(talentInfo->RankID[rank], m_activeSpec))
             {
                 learnSpell(talentInfo->RankID[rank], false); // add the talent to the PlayerSpellMap
                 spentTalents += (rank + 1);                  // increment the spentTalents count
-                haveLearnedMaxRank=true;                     // prevent counting spentTalents if talent happens to be faulty
             }
         }
     }
@@ -21748,7 +21751,6 @@ void Player::ActivateSpec(uint8 spec)
     Powers pw = getPowerType();
     if(pw != POWER_MANA)
         SetPower(POWER_MANA, 0);
-
     SetPower(pw, 0);
 }
 
